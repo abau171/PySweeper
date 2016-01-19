@@ -20,6 +20,10 @@ class MineMap:
 				for (checkX, checkY) in self.surrounding(x, y):
 					if self.map[checkX][checkY] == -1:
 						self.map[x][y] += 1
+	def getHeight(self):
+		return self.height
+	def getWidth(self):
+		return self.width
 	def coords(self):
 		return MineMapIter(self)
 	def surrounding(self, x, y):
@@ -27,8 +31,27 @@ class MineMap:
 	def get(self, x, y):
 		if x >= 0 and x < self.width and y >= 0 and y < self.height:
 			return self.map[x][y]
-		else:
-			return None
+		return None
+
+class MaskedMineMap:
+	def __init__(self, mineMap):
+		self.mineMap = mineMap
+		self.maskMap = [[False for row in range(self.mineMap.height)] for col in range(self.mineMap.width)]
+	def getHeight(self):
+		return self.mineMap.getHeight()
+	def getWidth(self):
+		return self.mineMap.getWidth()
+	def coords(self):
+		return MineMapIter(self)
+	def surrounding(self, x, y):
+		return MineMapSurroundingCoordIter(self, x, y)
+	def get(self, x, y):
+		if x >= 0 and x < self.getWidth() and y >= 0 and y < self.getHeight():
+			if self.maskMap[x][y]:
+				return self.mineMap.get(x, y)
+		return None
+	def unmask(self, x, y):
+		self.maskMap[x][y] = True
 
 class MineMapIter:
 	def __init__(self, mineMap):
@@ -39,10 +62,10 @@ class MineMapIter:
 		return self
 	def __next__(self):
 		self.x += 1
-		if self.x >= len(self.mineMap.map):
+		if self.x >= self.mineMap.getWidth():
 			self.x = 0
 			self.y += 1
-		if self.y >= len(self.mineMap.map[self.x]):
+		if self.y >= self.mineMap.getHeight():
 			raise StopIteration
 		return (self.x, self.y)
 
@@ -68,8 +91,8 @@ class MineMapSurroundingCoordIter:
 				raise StopIteration
 			surrX = self.x + self.dx
 			surrY = self.y + self.dy
-			if surrX >= 0 and surrX < len(self.mineMap.map):
-				if surrY >= 0 and surrY < len(self.mineMap.map[surrX]):
+			if surrX >= 0 and surrX < self.mineMap.getWidth():
+				if surrY >= 0 and surrY < self.mineMap.getHeight():
 					result = (surrX, surrY)
 		return result
 
@@ -80,22 +103,17 @@ class PySweeperModel:
 		self.numMines = numMines
 		self.dugMine = False
 		self.mineMap = MineMap(self.width, self.height, self.numMines)
-		self.maskMap = [[False for row in range(self.height)] for col in range(self.width)]
+		self.maskMap = MaskedMineMap(self.mineMap)
 	def dig(self, x, y):
 		if self.dugMine:
 			return
-		self.maskMap[x][y] = True
+		self.maskMap.unmask(x, y)
 		if self.mineMap.get(x, y) == -1:
 			self.dugMine = True
 		elif self.mineMap.get(x, y) == 0:
-			for dX in range(-1, 2):
-				for dY in range(-1, 2):
-					if not (dX == 0 and dY == 0):
-						checkX = x + dX
-						checkY = y + dY
-						if checkX >= 0 and checkX < self.width and checkY >= 0 and checkY < self.height:
-							if self.maskMap[checkX][checkY] == False:
-								self.dig(checkX, checkY)
+			for (checkX, checkY) in self.mineMap.surrounding(x, y):
+				if self.maskMap.get(checkX, checkY) == None:
+					self.dig(checkX, checkY)
 
 class PySweeper:
 	def start(self, width=15, height=10, numMines=20):
@@ -123,6 +141,8 @@ class PySweeper:
 	def updateButtonText(self):
 		for col in range(self.width):
 			for row in range(self.height):
-				self.buttons[col][row].config(text=self.model.mineMap.get(col, row) if self.model.maskMap[col][row] else "")
+				value = self.model.maskMap.get(col, row)
+				text = str(value if value != None else "")
+				self.buttons[col][row].config(text=text)
 
 PySweeper().start()
