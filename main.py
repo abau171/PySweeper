@@ -1,43 +1,93 @@
 import tkinter
 import random
 
+class MineMap:
+	def __init__(self, width, height, numMines):
+		self.width = width
+		self.height = height
+		self.numMines = numMines
+		self.map = [[0 for row in range(height)] for col in range(width)]
+		for i in range(numMines):
+			minePlanted = False
+			while not minePlanted:
+				col = random.randint(0, width - 1)
+				row = random.randint(0, height - 1)
+				if self.map[col][row] == 0:
+					self.map[col][row] = -1
+					minePlanted = True
+		for (x, y) in self.coords():
+			if self.map[x][y] != -1:
+				for (checkX, checkY) in self.surrounding(x, y):
+					if self.map[checkX][checkY] == -1:
+						self.map[x][y] += 1
+	def coords(self):
+		return MineMapIter(self)
+	def surrounding(self, x, y):
+		return MineMapSurroundingCoordIter(self, x, y)
+	def get(self, x, y):
+		if x >= 0 and x < self.width and y >= 0 and y < self.height:
+			return self.map[x][y]
+		else:
+			return None
+
+class MineMapIter:
+	def __init__(self, mineMap):
+		self.mineMap = mineMap
+		self.x = -1
+		self.y = 0
+	def __iter__(self):
+		return self
+	def __next__(self):
+		self.x += 1
+		if self.x >= len(self.mineMap.map):
+			self.x = 0
+			self.y += 1
+		if self.y >= len(self.mineMap.map[self.x]):
+			raise StopIteration
+		return (self.x, self.y)
+
+class MineMapSurroundingCoordIter:
+	def __init__(self, mineMap, x, y):
+		self.mineMap = mineMap
+		self.x = x
+		self.y = y
+		self.dx = -2
+		self.dy = -1
+	def __iter__(self):
+		return self
+	def __next__(self):
+		result = None
+		while result == None:
+			self.dx += 1
+			if self.dx == 0 and self.dy == 0:
+				self.dx += 1
+			if self.dx > 1:
+				self.dx = -1
+				self.dy += 1
+			if self.dy > 1:
+				raise StopIteration
+			surrX = self.x + self.dx
+			surrY = self.y + self.dy
+			if surrX >= 0 and surrX < len(self.mineMap.map):
+				if surrY >= 0 and surrY < len(self.mineMap.map[surrX]):
+					result = (surrX, surrY)
+		return result
+
 class PySweeperModel:
 	def __init__(self, width, height, numMines):
 		self.width = width
 		self.height = height
 		self.numMines = numMines
 		self.dugMine = False
-		# generate mines
-		self.mineMap = [[0 for row in range(self.height)] for col in range(self.width)]
-		for i in range(self.numMines):
-			minePlanted = False
-			while not minePlanted:
-				col = random.randint(0, self.width - 1)
-				row = random.randint(0, self.height - 1)
-				if self.mineMap[col][row] == 0:
-					self.mineMap[col][row] = -1
-					minePlanted = True
-		# find number of nearby mines
-		for col in range(self.width):
-			for row in range(self.height):
-				if self.mineMap[col][row] != -1:
-					for dCol in range(-1, 2):
-						for dRow in range(-1, 2):
-							if not (dCol == 0 and dRow == 0):
-								checkCol = col + dCol
-								checkRow = row + dRow
-								if checkCol >= 0 and checkCol < self.width and checkRow >= 0 and checkRow < self.height:
-									if self.mineMap[checkCol][checkRow] == -1:
-										self.mineMap[col][row] += 1
-		# initially, nothing is discovered
+		self.mineMap = MineMap(self.width, self.height, self.numMines)
 		self.maskMap = [[False for row in range(self.height)] for col in range(self.width)]
 	def dig(self, x, y):
 		if self.dugMine:
 			return
 		self.maskMap[x][y] = True
-		if self.mineMap[x][y] == -1:
+		if self.mineMap.get(x, y) == -1:
 			self.dugMine = True
-		elif self.mineMap[x][y] == 0:
+		elif self.mineMap.get(x, y) == 0:
 			for dX in range(-1, 2):
 				for dY in range(-1, 2):
 					if not (dX == 0 and dY == 0):
@@ -73,6 +123,6 @@ class PySweeper:
 	def updateButtonText(self):
 		for col in range(self.width):
 			for row in range(self.height):
-				self.buttons[col][row].config(text=self.model.mineMap[col][row] if self.model.maskMap[col][row] else "")
+				self.buttons[col][row].config(text=self.model.mineMap.get(col, row) if self.model.maskMap[col][row] else "")
 
 PySweeper().start()
