@@ -1,6 +1,9 @@
 import tkinter
 import random
 
+MINE = -1
+UNKNOWN = -2
+
 class MineMap:
 	def __init__(self, width, height, numMines):
 		self.width = width
@@ -13,12 +16,12 @@ class MineMap:
 				col = random.randint(0, width - 1)
 				row = random.randint(0, height - 1)
 				if self.map[col][row] == 0:
-					self.map[col][row] = -1
+					self.map[col][row] = MINE
 					minePlanted = True
 		for (x, y) in self.coords():
-			if self.map[x][y] != -1:
+			if self.map[x][y] != MINE:
 				for (checkX, checkY) in self.surrounding(x, y):
-					if self.map[checkX][checkY] == -1:
+					if self.map[checkX][checkY] == MINE:
 						self.map[x][y] += 1
 	def getHeight(self):
 		return self.height
@@ -49,6 +52,7 @@ class MaskedMineMap:
 		if x >= 0 and x < self.getWidth() and y >= 0 and y < self.getHeight():
 			if self.maskMap[x][y]:
 				return self.mineMap.get(x, y)
+			return UNKNOWN
 		return None
 	def unmask(self, x, y):
 		self.maskMap[x][y] = True
@@ -108,11 +112,11 @@ class PySweeperModel:
 		if self.dugMine:
 			return
 		self.maskMap.unmask(x, y)
-		if self.mineMap.get(x, y) == -1:
+		if self.mineMap.get(x, y) == MINE:
 			self.dugMine = True
 		elif self.mineMap.get(x, y) == 0:
 			for (checkX, checkY) in self.mineMap.surrounding(x, y):
-				if self.maskMap.get(checkX, checkY) == None:
+				if self.maskMap.get(checkX, checkY) == UNKNOWN:
 					self.dig(checkX, checkY)
 
 class PySweeper:
@@ -142,7 +146,14 @@ class PySweeper:
 		for col in range(self.width):
 			for row in range(self.height):
 				value = self.model.maskMap.get(col, row)
-				text = str(value if value != None else "")
+				if value >= 0:
+					text = str(value)
+				elif value == MINE:
+					text = "X"
+				elif value == UNKNOWN:
+					text = ""
+				else:
+					text = "?"
 				self.buttons[col][row].config(text=text)
 
 PySweeper().start()
