@@ -3,6 +3,8 @@ import random
 
 MINE = -1
 UNKNOWN = -2
+FLAG = -3
+UNSURE = -4
 
 class MineMap:
 	def __init__(self, width, height, numMines):
@@ -39,7 +41,7 @@ class MineMap:
 class MaskedMineMap:
 	def __init__(self, mineMap):
 		self.mineMap = mineMap
-		self.maskMap = [[False for row in range(self.mineMap.height)] for col in range(self.mineMap.width)]
+		self.maskMap = [[UNKNOWN for row in range(self.mineMap.height)] for col in range(self.mineMap.width)]
 	def getHeight(self):
 		return self.mineMap.getHeight()
 	def getWidth(self):
@@ -50,12 +52,23 @@ class MaskedMineMap:
 		return MineMapSurroundingCoordIter(self, x, y)
 	def get(self, x, y):
 		if x >= 0 and x < self.getWidth() and y >= 0 and y < self.getHeight():
-			if self.maskMap[x][y]:
+			if self.maskMap[x][y] == None:
 				return self.mineMap.get(x, y)
-			return UNKNOWN
+			return self.maskMap[x][y]
 		return None
+	def isMasked(self, x, y):
+		return self.maskMap[x][y] != None
 	def unmask(self, x, y):
-		self.maskMap[x][y] = True
+		self.maskMap[x][y] = None
+	def toggleFlag(self, x, y):
+		mask = self.maskMap[x][y]
+		if mask == UNKNOWN:
+			mask = FLAG
+		elif mask == FLAG:
+			mask = UNSURE
+		elif mask == UNSURE:
+			mask = UNKNOWN
+		self.maskMap[x][y] = mask
 
 class MineMapIter:
 	def __init__(self, mineMap):
@@ -109,15 +122,22 @@ class PySweeperModel:
 		self.mineMap = MineMap(self.width, self.height, self.numMines)
 		self.maskMap = MaskedMineMap(self.mineMap)
 	def dig(self, x, y):
+		if self.dugMine or self.maskMap.get(x, y) != UNKNOWN:
+			return
+		self.forceDig(x, y)
+	def forceDig(self, x, y):
+		if self.maskMap.isMasked(x, y):
+			self.maskMap.unmask(x, y)
+			if self.mineMap.get(x, y) == MINE:
+				self.dugMine = True
+			elif self.mineMap.get(x, y) == 0:
+				for (checkX, checkY) in self.mineMap.surrounding(x, y):
+					if self.maskMap.get(checkX, checkY) != None:
+						self.forceDig(checkX, checkY)
+	def toggleFlag(self, x, y):
 		if self.dugMine:
 			return
-		self.maskMap.unmask(x, y)
-		if self.mineMap.get(x, y) == MINE:
-			self.dugMine = True
-		elif self.mineMap.get(x, y) == 0:
-			for (checkX, checkY) in self.mineMap.surrounding(x, y):
-				if self.maskMap.get(checkX, checkY) == UNKNOWN:
-					self.dig(checkX, checkY)
+		self.maskMap.toggleFlag(x, y)
 
 class PySweeper:
 	def start(self, width=15, height=10, numMines=20):
@@ -127,17 +147,24 @@ class PySweeper:
 		self.model = PySweeperModel(width, height, numMines)
 		self.root = tkinter.Tk()
 		def digFunction(x, y):
-			def dig():
+			def dig(event):
 				self.model.dig(x, y)
 				self.updateButtonText()
 			return dig
+		def flagFunction(x, y):
+			def toggleFlag(event):
+				self.model.toggleFlag(x, y)
+				self.updateButtonText()
+			return toggleFlag
 		self.buttons = [[None for row in range(self.height)] for col in range(self.width)]
 		for row in range(self.height):
 			for col in range(self.width):
 				f = tkinter.Frame(self.root, width=24, height=24)
 				f.pack_propagate(0)
 				f.grid(row=row, column=col)
-				b = tkinter.Button(f, command=digFunction(col, row))
+				b = tkinter.Button(f)
+				b.bind("<ButtonRelease-1>", digFunction(col, row))
+				b.bind("<ButtonRelease-3>", flagFunction(col, row))
 				b.pack(fill=tkinter.BOTH, expand=tkinter.YES)
 				self.buttons[col][row] = b
 		self.updateButtonText()
@@ -152,8 +179,12 @@ class PySweeper:
 					text = "X"
 				elif value == UNKNOWN:
 					text = ""
-				else:
+				elif value == FLAG:
+					text = "P"
+				elif value == UNSURE:
 					text = "?"
+				else:
+					text = "MISSINGNO"
 				self.buttons[col][row].config(text=text)
 
 PySweeper().start()
