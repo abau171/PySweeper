@@ -6,6 +6,8 @@ UNKNOWN = -2
 FLAG = -3
 UNSURE = -4
 
+numberColors = ["gray", "blue", "green", "red", "navy", "brown", "light sea green", "black", "gray17"]
+
 class MineMap:
 	def __init__(self, width, height, numMines):
 		self.width = width
@@ -162,7 +164,7 @@ class PySweeper:
 				f = tkinter.Frame(self.root, width=24, height=24)
 				f.pack_propagate(0)
 				f.grid(row=row, column=col)
-				b = tkinter.Button(f)
+				b = tkinter.Button(f, font=("helvetica", 10, "bold"))
 				b.bind("<ButtonRelease-1>", digFunction(col, row))
 				b.bind("<ButtonRelease-3>", flagFunction(col, row))
 				b.pack(fill=tkinter.BOTH, expand=tkinter.YES)
@@ -175,16 +177,22 @@ class PySweeper:
 				value = self.model.maskMap.get(col, row)
 				if value >= 0:
 					text = str(value)
+					color = numberColors[value]
 				elif value == MINE:
 					text = "X"
+					color = "black"
 				elif value == UNKNOWN:
 					text = ""
+					color = "black"
 				elif value == FLAG:
 					text = "P"
+					color = "red"
 				elif value == UNSURE:
 					text = "?"
+					color = "blue"
 				else:
 					text = "MISSINGNO"
-				self.buttons[col][row].config(text=text)
+					color = "red"
+				self.buttons[col][row].config(text=text, fg=color)
 
 PySweeper().start()
