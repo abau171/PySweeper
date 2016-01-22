@@ -155,4 +155,7 @@ class PySweeperModel(VisibilityGrid):
 			next = Items.UNSURE
 		elif curr == Items.UNSURE:
 			next = Items.DIRT
+		else:
+			pass
+			# TODO raise incorrect state exception
 		self.grid[x][y] = next
