@@ -148,14 +148,18 @@ class PySweeperModel(VisibilityGrid):
 				if self.grid[surrX][surrY] != None:
 					self.uncover(surrX, surrY)
 	def toggleFlag(self, x, y):
-		curr = self.grid[x][y]
-		if curr == Items.DIRT:
-			next = Items.FLAG
-		elif curr == Items.FLAG:
-			next = Items.UNSURE
-		elif curr == Items.UNSURE:
-			next = Items.DIRT
+		if self.state == ModelState.PLAYING:
+			curr = self.grid[x][y]
+			if curr == Items.DIRT:
+				next = Items.FLAG
+			elif curr == Items.FLAG:
+				next = Items.UNSURE
+			elif curr == Items.UNSURE:
+				next = Items.DIRT
+			else:
+				pass
+				# TODO raise incorrect toggle exception
+			self.grid[x][y] = next
 		else:
 			pass
 			# TODO raise incorrect state exception
-		self.grid[x][y] = next
