@@ -9,39 +9,12 @@ UNSURE = -4
 
 numberColors = ["gray", "blue", "green", "red", "navy", "brown", "light sea green", "black", "gray17"]
 
-# class PySweeperModel:
-# 	def __init__(self, width, height, numMines):
-# 		self.width = width
-# 		self.height = height
-# 		self.numMines = numMines
-# 		self.dugMine = False
-# 		self.mineMap = MineMap(self.width, self.height, self.numMines)
-# 		self.maskMap = MaskedMineMap(self.mineMap)
-# 	def dig(self, x, y):
-# 		if self.dugMine or self.maskMap.get(x, y) != UNKNOWN:
-# 			return
-# 		self.forceDig(x, y)
-# 	def forceDig(self, x, y):
-# 		if self.maskMap.isMasked(x, y):
-# 			self.maskMap.unmask(x, y)
-# 			if self.mineMap.get(x, y) == MINE:
-# 				self.dugMine = True
-# 			elif self.mineMap.get(x, y) == 0:
-# 				for (checkX, checkY) in self.mineMap.surrounding(x, y):
-# 					if self.maskMap.get(checkX, checkY) != None:
-# 						self.forceDig(checkX, checkY)
-# 	def toggleFlag(self, x, y):
-# 		if self.dugMine:
-# 			return
-# 		self.maskMap.toggleFlag(x, y)
-
 class PySweeper:
 	def start(self, width=15, height=10, numMines=20):
 		self.width = width
 		self.height = height
 		self.numMines = numMines
 		self.model = model.PySweeperModel(width, height, numMines)
-		print("got model!")
 		self.root = tkinter.Tk()
 		def digFunction(x, y):
 			def dig(event):

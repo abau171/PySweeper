@@ -127,3 +127,32 @@ class PySweeperModel(VisibilityGrid):
 		return self.numMines
 	def getNumMinesLeft(self):
 		return self.numMines - self.numFlags
+	def dig(self, x, y):
+		if self.state == ModelState.PLAYING:
+			if self.get(x, y) == Items.DIRT:
+				self.uncover(x, y)
+				dugUp = self.mineGrid.get(x, y)
+				if dugUp == Items.MINE:
+					self.state = ModelState.FAILED
+			else:
+				pass
+				# TODO raise can only dig dirt exception
+		else:
+			pass
+			# TODO raise incorrect state exception
+	def uncover(self, x, y):
+		self.grid[x][y] = None
+		# TODO perform BFS to reduce number of recursive calls
+		if self.mineGrid.get(x, y) == 0:
+			for (surrX, surrY) in self.surrounding(x, y):
+				if self.grid[surrX][surrY] != None:
+					self.uncover(surrX, surrY)
+	def toggleFlag(self, x, y):
+		curr = self.grid[x][y]
+		if curr == Items.DIRT:
+			next = Items.FLAG
+		elif curr == Items.FLAG:
+			next = Items.UNSURE
+		elif curr == Items.UNSURE:
+			next = Items.DIRT
+		self.grid[x][y] = next
