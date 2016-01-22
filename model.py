@@ -119,6 +119,8 @@ class PySweeperModel(VisibilityGrid):
 		self.numMines = numMines
 		self.numFlags = 0
 		self.state = ModelState.PLAYING
+	def isPlaying(self):
+		return self.state == ModelState.PLAYING
 	def isSolved(self):
 		return self.state == ModelState.SOLVED
 	def isFailed(self):
