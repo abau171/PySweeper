@@ -1,10 +1,19 @@
 import model
 import view
 
-class PySweeper:
-	def start(self, width=15, height=10, numMines=5):
-		self.model = model.PySweeperModel(width, height, numMines)
-		self.view = view.PySweeperView(width, height, self.model)
+class PySweeperWindow:
+	def __init__(self, width=9, height=9, numMines=10):
+		self.width = width
+		self.height = height
+		self.numMines = numMines
+		def doReset():
+			self.reset()
+		self.view = view.PySweeperView(self.width, self.height, doReset)
+		self.reset()
+	def start(self):
 		self.view.start()
+	def reset(self):
+		self.model = model.PySweeperModel(self.width, self.height, self.numMines)
+		self.view.setModel(self.model)
 
-PySweeper().start()
+window = PySweeperWindow().start()

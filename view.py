@@ -37,19 +37,26 @@ smileyTexts[SmileyState.DEAD] = "XD"
 smileyTexts[SmileyState.COOL] = "B)"
 
 class SmileyButton:
-	def __init__(self, parent):
-		self.button = tkinter.Button(parent)
+	def __init__(self, parent, callback):
+		self.frame = tkinter.Frame(parent, width=30, height=30, bg="green")
+		self.frame.pack_propagate(0)
+		self.button = tkinter.Button(self.frame)
 		self.updateState(SmileyState.HAPPY)
-		self.button.pack()
+		self.button.pack(fill=tkinter.BOTH, expand=tkinter.YES)
+		self.frame.pack()
+		def doCallback(event):
+			callback()
+		self.button.bind("<ButtonRelease-1>", doCallback)
 	def updateState(self, state):
 		self.state = state
 		self.button.config(text=smileyTexts[self.state])
 
 class PySweeperView:
-	def __init__(self, width, height, model):
+	def __init__(self, width, height, resetCallback):
 		self.width = width
 		self.height = height
-		self.model = model
+		self.resetCallback = resetCallback
+		self.model = None
 		self.root = tkinter.Tk()
 		self.initTopFrame()
 		self.initGrid()
@@ -68,11 +75,15 @@ class PySweeperView:
 		self.updateStats()
 		self.gridFrame.pack()
 	def initTopFrame(self):
-		self.topFrame = tkinter.Frame(self.root)
+		self.topFrame = tkinter.Frame(self.root, padx=10, pady=10)
 		self.minesLeftText = tkinter.Label(self.topFrame, text="0")
 		self.minesLeftText.pack(side=tkinter.LEFT)
-		self.smileyButton = SmileyButton(self.topFrame)
+		self.smileyButton = SmileyButton(self.topFrame, self.resetCallback)
 		self.topFrame.pack(fill=tkinter.X)
+	def setModel(self, model):
+		self.model = model
+		self.updateButtons()
+		self.updateStats()
 	def digFunction(self, x, y):
 		def dig(event):
 			self.model.dig(x, y)
@@ -93,22 +104,34 @@ class PySweeperView:
 		for y in range(self.height):
 			for x in range(self.width):
 				button = self.buttons[x][y]
-				value = self.model.get(x, y)
-				bType = buttonTypes[value]
-				button.config(text=bType.text, fg=bType.textColor, activeforeground=bType.textColor)
 				button.unbind("<Button-1>")
 				button.unbind("<ButtonRelease-1>")
 				button.unbind("<ButtonRelease-3>")
-				if self.model.isPlaying() and bType.digEnabled:
-					button.bind("<Button-1>", self.smileyFunction(SmileyState.SCARED))
-					button.bind("<ButtonRelease-1>", self.digFunction(x, y))
-				if self.model.isPlaying() and bType.toggleEnabled:
-					button.bind("<ButtonRelease-3>", self.flagFunction(x, y))
+				if self.model != None:
+					value = self.model.get(x, y)
+				else:
+					value = model.Items.DIRT
+				bType = buttonTypes[value]
+				if self.model != None:
+					if self.model.isPlaying() and bType.digEnabled:
+						button.bind("<Button-1>", self.smileyFunction(SmileyState.SCARED))
+						button.bind("<ButtonRelease-1>", self.digFunction(x, y))
+					if self.model.isPlaying() and bType.toggleEnabled:
+						button.bind("<ButtonRelease-3>", self.flagFunction(x, y))
+				button.config(text=bType.text, fg=bType.textColor, activeforeground=bType.textColor)
 	def updateStats(self):
-		self.minesLeftText.config(text=str(self.model.getNumMinesLeft()))
-		if self.model.isSolved():
+		if self.model != None:
+			minesLeft = self.model.getNumMinesLeft()
+			solved = self.model.isSolved()
+			failed = self.model.isFailed()
+		else:
+			minesLeft = 0
+			solved = False
+			failed = False
+		self.minesLeftText.config(text=str(minesLeft))
+		if solved:
 			newSmiley = SmileyState.COOL
-		elif self.model.isFailed():
+		elif failed:
 			newSmiley = SmileyState.DEAD
 		else:
 			newSmiley = SmileyState.HAPPY
