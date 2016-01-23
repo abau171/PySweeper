@@ -118,6 +118,8 @@ class PySweeperModel(VisibilityGrid):
 		VisibilityGrid.__init__(self, width, height, numMines)
 		self.numMines = numMines
 		self.numFlags = 0
+		self.numSlots = width * height
+		self.numDug = 0
 		self.state = ModelState.PLAYING
 	def isPlaying(self):
 		return self.state == ModelState.PLAYING
@@ -136,6 +138,8 @@ class PySweeperModel(VisibilityGrid):
 				dugUp = self.mineGrid.get(x, y)
 				if dugUp == Items.MINE:
 					self.state = ModelState.FAILED
+				elif self.numDug == self.numSlots - self.numMines:
+					self.state = ModelState.SOLVED
 			else:
 				pass
 				# TODO raise can only dig dirt exception
@@ -145,6 +149,7 @@ class PySweeperModel(VisibilityGrid):
 	def uncover(self, x, y):
 		if self.grid[x][y] == Items.FLAG:
 			self.numFlags -= 1
+		self.numDug += 1
 		self.grid[x][y] = None
 		# TODO perform BFS to reduce number of recursive calls
 		if self.mineGrid.get(x, y) == 0:

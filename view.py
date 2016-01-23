@@ -24,6 +24,27 @@ buttonTypes[6] = ButtonType("6", "light sea green")
 buttonTypes[7] = ButtonType("7", "black")
 buttonTypes[8] = ButtonType("8", "gray17")
 
+class SmileyState:
+	HAPPY=0
+	SCARED=1
+	DEAD=2
+	COOL=3
+
+smileyTexts = dict()
+smileyTexts[SmileyState.HAPPY] = ":)"
+smileyTexts[SmileyState.SCARED] = ":o"
+smileyTexts[SmileyState.DEAD] = "XD"
+smileyTexts[SmileyState.COOL] = "B)"
+
+class SmileyButton:
+	def __init__(self, parent):
+		self.button = tkinter.Button(parent)
+		self.updateState(SmileyState.HAPPY)
+		self.button.pack()
+	def updateState(self, state):
+		self.state = state
+		self.button.config(text=smileyTexts[self.state])
+
 class PySweeperView:
 	def __init__(self, width, height, model):
 		self.width = width
@@ -50,8 +71,7 @@ class PySweeperView:
 		self.topFrame = tkinter.Frame(self.root)
 		self.minesLeftText = tkinter.Label(self.topFrame, text="0")
 		self.minesLeftText.pack(side=tkinter.LEFT)
-		self.resetButton = tkinter.Button(self.topFrame, text=":)")
-		self.resetButton.pack()
+		self.smileyButton = SmileyButton(self.topFrame)
 		self.topFrame.pack(fill=tkinter.X)
 	def digFunction(self, x, y):
 		def dig(event):
@@ -65,6 +85,10 @@ class PySweeperView:
 			self.updateButtons()
 			self.updateStats()
 		return toggleFlag
+	def smileyFunction(self, state):
+		def updateSmileyState(event):
+			self.smileyButton.updateState(state)
+		return updateSmileyState
 	def updateButtons(self):
 		for y in range(self.height):
 			for x in range(self.width):
@@ -72,13 +96,22 @@ class PySweeperView:
 				value = self.model.get(x, y)
 				bType = buttonTypes[value]
 				button.config(text=bType.text, fg=bType.textColor, activeforeground=bType.textColor)
+				button.unbind("<Button-1>")
 				button.unbind("<ButtonRelease-1>")
 				button.unbind("<ButtonRelease-3>")
 				if self.model.isPlaying() and bType.digEnabled:
+					button.bind("<Button-1>", self.smileyFunction(SmileyState.SCARED))
 					button.bind("<ButtonRelease-1>", self.digFunction(x, y))
 				if self.model.isPlaying() and bType.toggleEnabled:
 					button.bind("<ButtonRelease-3>", self.flagFunction(x, y))
 	def updateStats(self):
 		self.minesLeftText.config(text=str(self.model.getNumMinesLeft()))
+		if self.model.isSolved():
+			newSmiley = SmileyState.COOL
+		elif self.model.isFailed():
+			newSmiley = SmileyState.DEAD
+		else:
+			newSmiley = SmileyState.HAPPY
+		self.smileyButton.updateState(newSmiley)
 	def start(self):
 		self.root.mainloop()
