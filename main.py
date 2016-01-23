@@ -1,6 +1,10 @@
 import model
 import view
 
+WIDTH = 9
+HEIGHT = 9
+NUM_MINES = 10
+
 class PySweeperWindow:
 	def __init__(self, width=9, height=9, numMines=10):
 		self.width = width
@@ -16,4 +20,4 @@ class PySweeperWindow:
 		self.model = model.PySweeperModel(self.width, self.height, self.numMines)
 		self.view.setModel(self.model)
 
-window = PySweeperWindow().start()
+window = PySweeperWindow(width=WIDTH, height=HEIGHT, numMines=NUM_MINES).start()
