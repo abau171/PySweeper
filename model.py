@@ -143,6 +143,8 @@ class PySweeperModel(VisibilityGrid):
 			pass
 			# TODO raise incorrect state exception
 	def uncover(self, x, y):
+		if self.grid[x][y] == Items.FLAG:
+			self.numFlags -= 1
 		self.grid[x][y] = None
 		# TODO perform BFS to reduce number of recursive calls
 		if self.mineGrid.get(x, y) == 0:
@@ -154,8 +156,10 @@ class PySweeperModel(VisibilityGrid):
 			curr = self.grid[x][y]
 			if curr == Items.DIRT:
 				next = Items.FLAG
+				self.numFlags += 1
 			elif curr == Items.FLAG:
 				next = Items.UNSURE
+				self.numFlags -= 1
 			elif curr == Items.UNSURE:
 				next = Items.DIRT
 			else:

@@ -30,27 +30,40 @@ class PySweeperView:
 		self.height = height
 		self.model = model
 		self.root = tkinter.Tk()
+		self.initTopFrame()
 		self.initGrid()
 	def initGrid(self):
+		self.gridFrame = tkinter.Frame(self.root)
 		self.buttons = [[None for y in range(self.height)] for x in range(self.width)]
 		for y in range(self.height):
 			for x in range(self.width):
-				f = tkinter.Frame(self.root, width=24, height=24)
+				f = tkinter.Frame(self.gridFrame, width=24, height=24)
 				f.pack_propagate(0)
 				f.grid(row=y, column=x)
 				b = tkinter.Button(f, font=("helvetica", 10, "bold"))
 				b.pack(fill=tkinter.BOTH, expand=tkinter.YES)
 				self.buttons[x][y] = b
 		self.updateButtons()
+		self.updateStats()
+		self.gridFrame.pack()
+	def initTopFrame(self):
+		self.topFrame = tkinter.Frame(self.root)
+		self.minesLeftText = tkinter.Label(self.topFrame, text="0")
+		self.minesLeftText.pack(side=tkinter.LEFT)
+		self.resetButton = tkinter.Button(self.topFrame, text=":)")
+		self.resetButton.pack()
+		self.topFrame.pack(fill=tkinter.X)
 	def digFunction(self, x, y):
 		def dig(event):
 			self.model.dig(x, y)
 			self.updateButtons()
+			self.updateStats()
 		return dig
 	def flagFunction(self, x, y):
 		def toggleFlag(event):
 			self.model.toggleFlag(x, y)
 			self.updateButtons()
+			self.updateStats()
 		return toggleFlag
 	def updateButtons(self):
 		for y in range(self.height):
@@ -65,5 +78,7 @@ class PySweeperView:
 					button.bind("<ButtonRelease-1>", self.digFunction(x, y))
 				if self.model.isPlaying() and bType.toggleEnabled:
 					button.bind("<ButtonRelease-3>", self.flagFunction(x, y))
+	def updateStats(self):
+		self.minesLeftText.config(text=str(self.model.getNumMinesLeft()))
 	def start(self):
 		self.root.mainloop()
