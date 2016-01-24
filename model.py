@@ -13,14 +13,21 @@ class Grid:
 		self.grid = [[None for row in range(self.height)] for col in range(self.width)]
 	def get(self, x, y):
 		return self.grid[x][y]
-	def getWidth(self):
-		return self.width
-	def getHeight(self):
-		return self.height
+	def has(self, x, y):
+		return x >= 0 and x < self.width and y >= 0 and y < self.height
 	def coords(self):
-		return GridIter(self)
+		for x in range(self.width):
+			for y in range(self.height):
+				yield (x, y)
 	def surrounding(self, x, y):
-		return GridSurroundingIter(self, x, y)
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				if dx == 0 and dy == 0:
+					continue
+				surrX = x + dx
+				surrY = y + dy
+				if self.has(surrX, surrY):
+					yield (surrX, surrY)
 
 class MineGrid(Grid):
 	def __init__(self, width, height, numMines):
@@ -62,49 +69,6 @@ class VisibilityGrid(Grid):
 			return self.mineGrid.get(x, y)
 		else:
 			return mask
-
-class GridIter:
-	def __init__(self, grid):
-		self.grid = grid
-		self.x = -1
-		self.y = 0
-	def __iter__(self):
-		return self
-	def __next__(self):
-		self.x += 1
-		if self.x >= self.grid.getWidth():
-			self.x = 0
-			self.y += 1
-		if self.y >= self.grid.getHeight():
-			raise StopIteration
-		return (self.x, self.y)
-
-class GridSurroundingIter:
-	def __init__(self, grid, x, y):
-		self.grid = grid
-		self.x = x
-		self.y = y
-		self.dx = -2
-		self.dy = -1
-	def __iter__(self):
-		return self
-	def __next__(self):
-		result = None
-		while result == None:
-			self.dx += 1
-			if self.dx == 0 and self.dy == 0:
-				self.dx += 1
-			if self.dx > 1:
-				self.dx = -1
-				self.dy += 1
-			if self.dy > 1:
-				raise StopIteration
-			surrX = self.x + self.dx
-			surrY = self.y + self.dy
-			if surrX >= 0 and surrX < self.grid.getWidth():
-				if surrY >= 0 and surrY < self.grid.getHeight():
-					result = (surrX, surrY)
-		return result
 
 class ModelState:
 	PLAYING = 0
